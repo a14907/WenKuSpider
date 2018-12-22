@@ -5,9 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="450" Width="800" WindowState="Maximized">
     <Grid>
-        <WebBrowser HorizontalAlignment="Left" Height="100" Margin="10,10,0,0" VerticalAlignment="Top" Width="100"/>
+        <WebBrowser Margin="10,85,10,10" Loaded="WebBrowser_Loaded" Name="browser"/>
+        <Button Content="下载" HorizontalAlignment="Left" Margin="10,11,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click" RenderTransformOrigin="0.867,0.632"/>
+        <TextBox Name="txtLog" Height="68" Margin="90,10,10,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" RenderTransformOrigin="0.433,0.174"/>
+        <Button Content="后退" HorizontalAlignment="Left" Margin="10,35,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click_1"/>
+        <Button Content="前进" HorizontalAlignment="Left" Margin="10,59,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click_2"/>
 
     </Grid>
 </Window>
