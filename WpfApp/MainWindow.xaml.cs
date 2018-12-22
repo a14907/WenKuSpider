@@ -13,7 +13,7 @@ namespace WpfApp
     /// <summary>
     /// MainWindow.xaml 的交互逻辑
     /// </summary>
-    public partial class MainWindow : Window, ISetUrls
+    public partial class MainWindow : Window, IMainWindow
     {
         public MainWindow()
         {
@@ -59,8 +59,7 @@ namespace WpfApp
         /// <param name="e"></param>
         private void WebBrowser_Loaded(object sender, RoutedEventArgs e)
         {
-            var b = sender as WebBrowser;
-            if (b == null)
+            if (!(sender is WebBrowser b))
             {
                 return;
             }
@@ -151,9 +150,9 @@ namespace WpfApp
         [System.Runtime.InteropServices.ComVisible(true)] // 将该类设置为com可访问
         public class OprateBasic
         {
-            private readonly ISetUrls _setUrls;
+            private readonly IMainWindow _setUrls;
 
-            public OprateBasic(ISetUrls setUrls)
+            public OprateBasic(IMainWindow setUrls)
             {
                 this._setUrls = setUrls;
             }
@@ -180,12 +179,5 @@ namespace WpfApp
         {
             browser.GoForward();
         }
-    }
-
-    public interface ISetUrls
-    {
-        void SetUrls(string us);
-        void SetCookie(string cookie);
-        void Log(string msg);
     }
 }
