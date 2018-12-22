@@ -71,7 +71,7 @@ namespace WpfApp
 
             SetWebBrowserSilent(b, true);
 
-            b.Navigate("https://www.wenku8.net/index.php");
+            b.Navigate("https://www.wenku8.net/login.php?jumpurl=http%3A%2F%2Fwww.wenku8.net%2Findex.php");
         }
 
         /// <summary>
