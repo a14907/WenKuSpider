@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Helper;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Reflection;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using Taobaoke;
@@ -11,11 +13,43 @@ namespace WpfApp
     /// <summary>
     /// MainWindow.xaml 的交互逻辑
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, ISetUrls
     {
         public MainWindow()
         {
             InitializeComponent();
+            _timer = new Timer(CallbackAsync, null, 1000, Timeout.Infinite);
+        }
+
+
+        private List<string> _urls = new List<string>();
+        private string _cookie = "";
+        private SynchronizationContext _context = SynchronizationContext.Current;
+        private Timer _timer;
+
+        private async void CallbackAsync(object obj)
+        {
+            if (_urls.Count != 0)
+            {
+                Log("开始任务");
+                var urls = _urls[_urls.Count - 1];
+                _urls.RemoveAt(_urls.Count - 1);
+                if (urls.IndexOf('|') < 0)
+                {
+                    Log("_urls中的数据格式不正确，不包含字符：|");
+                }
+                else
+                {
+                    await DownloderHelper.Download(urls.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries), _cookie, Log);
+                    Log("下载完成");
+                }
+                _timer = new Timer(CallbackAsync, null, 1000, Timeout.Infinite);
+            }
+            else
+            {
+                Log("任务url为空");
+                _timer = new Timer(CallbackAsync, null, 10000, Timeout.Infinite);
+            }
         }
 
         /// <summary>
@@ -34,11 +68,11 @@ namespace WpfApp
             var webBrowserHelper = new WebBrowserHelper(b);
             webBrowserHelper.NewWindow += WebBrowserOnNewWindow;
 
-            b.ObjectForScripting = new OprateBasic();
+            b.ObjectForScripting = new OprateBasic(this);
 
             SetWebBrowserSilent(b, true);
 
-            b.Navigate("https://www.wenku8.net/book/2254.htm");
+            b.Navigate("https://www.wenku8.net/index.php");
         }
 
         /// <summary>
@@ -79,14 +113,36 @@ namespace WpfApp
         /// <param name="e"></param>
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            var urls = GetDownloadUrls();
+            BeginGetDownloadUrls();
         }
 
-        private IEnumerable<string> GetDownloadUrls()
+        private void BeginGetDownloadUrls()
         {
-            var script = ";var str='';var als=document.getElementsByTagName('a');for(var i=0;i<als.length;i++){var item=als[i];if(item.innerText.indexOf('TXT简繁')>=0){str+=('|'+item.href);}}if(str.length!=0){ window.external.DownloadForTheWpf(str); } else { alert('未找到下载连接'); }; ";
+            var script = ";window.external.SetCookiesVal(document.cookie);";
             browser.InvokeScript("eval", script);
-            return null;
+
+            script = ";var str='';var als=document.getElementsByTagName('a');for(var i=0;i<als.length;i++){var item=als[i];if(item.innerText.indexOf('TXT简繁')>=0){str+=('|'+item.href);}}if(str.length!=0){ window.external.DownloadForTheWpf(str); } else { alert('未找到下载连接'); }; ";
+            browser.InvokeScript("eval", script);
+        }
+
+        public void SetUrls(string us)
+        {
+            _urls.Add(us);
+            Log($"获取url成功:{us}");
+        }
+
+        public void SetCookie(string cookie)
+        {
+            _cookie = cookie;
+            Log("设置cookie成功");
+        }
+        public void Log(string msg)
+        {
+            _context.Post(p =>
+            {
+                txtLog.AppendText($"{DateTime.Now}:{msg}\r\n");
+                txtLog.ScrollToEnd();
+            }, null);
         }
 
         #region 帮助类
@@ -95,13 +151,41 @@ namespace WpfApp
         [System.Runtime.InteropServices.ComVisible(true)] // 将该类设置为com可访问
         public class OprateBasic
         {
+            private readonly ISetUrls _setUrls;
+
+            public OprateBasic(ISetUrls setUrls)
+            {
+                this._setUrls = setUrls;
+            }
+
             public void DownloadForTheWpf(string data)
             {
-                var arr = data.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
+                _setUrls.SetUrls(data);
+            }
+
+            public void SetCookiesVal(string cookies)
+            {
+                _setUrls.SetCookie(cookies);
             }
         }
 
         #endregion
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            browser.GoBack();
+        }
+
+        private void Button_Click_2(object sender, RoutedEventArgs e)
+        {
+            browser.GoForward();
+        }
     }
 
+    public interface ISetUrls
+    {
+        void SetUrls(string us);
+        void SetCookie(string cookie);
+        void Log(string msg);
+    }
 }
