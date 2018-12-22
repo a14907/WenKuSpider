@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Net.Http.Headers;
 using System;
+using System.Net;
 
 namespace Helper
 {
@@ -72,9 +73,7 @@ namespace Helper
                 else
                 {
                     var item = lsSimple[0];
-                    var response = await h.GetAsync(item);
-                    await (await response.Content.ReadAsStreamAsync()).SaveAsFile($"data/{dirTitle}/全本/简体/{dirTitle}.txt", (int)response.Content.Headers.ContentLength.Value);
-                    log("简体全本下载成功");
+                    await DownloadFile(cookies, log, $"data/{dirTitle}/全本/简体/{dirTitle}.txt", item);
                 }
             }
             else
@@ -85,7 +84,7 @@ namespace Helper
             var lsTraditional = table.SelectNodes("tr")
                 .Skip(1)//跳过第一个
                 .Select(m => m.SelectNodes("td").Last().SelectNodes("a").Skip(5).First().GetAttributeValue("href", "")).ToList();
-            if (lsTraditional.Count != 1)
+            if (lsTraditional.Count == 1)
             {
                 if (File.Exists($"data/{dirTitle}/全本/繁体/{dirTitle}.txt"))
                 {
@@ -94,14 +93,24 @@ namespace Helper
                 else
                 {
                     var item = lsTraditional[0];
-                    var response = await h.GetAsync(item);
-                    await (await response.Content.ReadAsStreamAsync()).SaveAsFile($"data/{dirTitle}/全本/繁体/{dirTitle}.txt", (int)response.Content.Headers.ContentLength.Value);
-                    log("繁体全本下载成功");
+                    await DownloadFile(cookies, log, $"data/{dirTitle}/全本/繁体/{dirTitle}.txt", item);
                 }
             }
             else
             {
                 log("全本下载的数量不等于1");
+            }
+        }
+
+        private static async Task DownloadFile(string cookies, Action<string> log, string filename, string item)
+        {
+            HttpWebRequest httpWebRequest = HttpWebRequest.CreateHttp(item);
+            httpWebRequest.Headers.Add("Cookie", cookies);
+            httpWebRequest.Method = "Get";
+            using (var response = httpWebRequest.GetResponse())
+            using (var stream = response.GetResponseStream())
+            {
+                await stream.SaveAsFile(filename, log);
             }
         }
 
@@ -142,9 +151,9 @@ namespace Helper
                     continue;
                 }
                 var item = lsSimple[i];
-                var response = await h.GetAsync(item);
-                await (await response.Content.ReadAsStreamAsync()).SaveAsFile($"data/{dirTitle}/分卷/简体/第{i + 1}卷.txt", (int)response.Content.Headers.ContentLength.Value);
-                log($"简体第{i+1}卷下载成功");
+                await DownloadFile(cookies, log, $"data/{dirTitle}/分卷/简体/第{i + 1}卷.txt", item);
+
+                log($"简体第{i + 1}卷下载成功");
             }
             //获取繁体的下载链接
             var lsTraditional = table.SelectNodes("tr")
@@ -158,8 +167,8 @@ namespace Helper
                     continue;
                 }
                 var item = lsTraditional[i];
-                var response = await h.GetAsync(item);
-                await (await response.Content.ReadAsStreamAsync()).SaveAsFile($"data/{dirTitle}/分卷/繁体/第{i + 1}卷.txt", (int)response.Content.Headers.ContentLength.Value);
+                await DownloadFile(cookies, log, $"data/{dirTitle}/分卷/繁体/第{i + 1}卷.txt", item);
+
                 log($"繁体第{i + 1}卷下载成功");
             }
         }
