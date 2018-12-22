@@ -1,19 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using Taobaoke;
 
 namespace WpfApp
@@ -26,11 +16,36 @@ namespace WpfApp
         public MainWindow()
         {
             InitializeComponent();
-
-            var webBrowserHelper = new WebBrowserHelper(browser);
-            webBrowserHelper.NewWindow += WebBrowserOnNewWindow; 
         }
 
+        /// <summary>
+        /// 设置首页
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void WebBrowser_Loaded(object sender, RoutedEventArgs e)
+        {
+            var b = sender as WebBrowser;
+            if (b == null)
+            {
+                return;
+            }
+            //设置以_blank打开url时候，不弹出浏览器
+            var webBrowserHelper = new WebBrowserHelper(b);
+            webBrowserHelper.NewWindow += WebBrowserOnNewWindow;
+
+            b.ObjectForScripting = new OprateBasic();
+
+            SetWebBrowserSilent(b, true);
+
+            b.Navigate("https://www.wenku8.net/book/2254.htm");
+        }
+
+        /// <summary>
+        /// 设置以_blank打开url时候，不弹出浏览器
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void WebBrowserOnNewWindow(object sender, CancelEventArgs e)
         {
             dynamic browser = sender;
@@ -41,22 +56,11 @@ namespace WpfApp
             e.Cancel = true;
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-        }
-
-        private void WebBrowser_Loaded(object sender, RoutedEventArgs e)
-        {
-            var b = sender as WebBrowser;
-            if (b == null)
-            {
-                return;
-            }
-            SetWebBrowserSilent(b, true);
-            b.Navigate("https://www.wenku8.net/index.php"); 
-        }
-         
-
+        /// <summary>
+        /// 页面报错的时候不提示弹窗
+        /// </summary>
+        /// <param name="webBrowser"></param>
+        /// <param name="silent"></param>
         private void SetWebBrowserSilent(WebBrowser webBrowser, bool silent)
         {
             FieldInfo fi = typeof(WebBrowser).GetField("_axIWebBrowser2", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -68,9 +72,36 @@ namespace WpfApp
             }
         }
 
+        /// <summary>
+        /// 下载逻辑
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            var url = browser.Source;
+            var urls = GetDownloadUrls();
         }
+
+        private IEnumerable<string> GetDownloadUrls()
+        {
+            var script = ";var str='';var als=document.getElementsByTagName('a');for(var i=0;i<als.length;i++){var item=als[i];if(item.innerText.indexOf('TXT简繁')>=0){str+=('|'+item.href);}}if(str.length!=0){ window.external.DownloadForTheWpf(str); } else { alert('未找到下载连接'); }; ";
+            browser.InvokeScript("eval", script);
+            return null;
+        }
+
+        #region 帮助类
+
+
+        [System.Runtime.InteropServices.ComVisible(true)] // 将该类设置为com可访问
+        public class OprateBasic
+        {
+            public void DownloadForTheWpf(string data)
+            {
+                var arr = data.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
+            }
+        }
+
+        #endregion
     }
+
 }
