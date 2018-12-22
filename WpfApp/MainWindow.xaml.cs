@@ -83,10 +83,26 @@ namespace WpfApp
         {
             dynamic browser = sender;
             dynamic activeElement = browser.Document.activeElement;
-            var link = activeElement.ToString();
-            // 这儿是在新窗口中打开，如果要在内部打开，改变当前browser的Source就行了
-            browser.Source = new Uri(link);
-            e.Cancel = true;
+            try
+            {
+                var link = activeElement.ToString();
+                // 这儿是在新窗口中打开，如果要在内部打开，改变当前browser的Source就行了
+                browser.Source = new Uri(link);
+                e.Cancel = true;
+            }
+            catch (Exception ex)
+            {
+                if (activeElement.value== "轻小说搜索")
+                {
+                    e.Cancel = true;
+                    string keywords = activeElement.parentElement.parentElement.children[1].children[0].value.ToString();
+                    this.browser.Navigate($"https://www.wenku8.net/modules/article/search.php?searchtype=articlename&searchkey={keywords}");
+                }
+                else
+                {
+                    throw;
+                }
+            }
         }
 
         /// <summary>
