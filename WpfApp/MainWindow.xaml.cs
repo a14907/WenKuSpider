@@ -29,26 +29,38 @@ namespace WpfApp
 
         private async void CallbackAsync(object obj)
         {
-            if (_urls.Count != 0)
+            try
             {
-                Log("开始任务");
-                var urls = _urls[_urls.Count - 1];
-                _urls.RemoveAt(_urls.Count - 1);
-                if (urls.IndexOf('|') < 0)
+                if (_urls.Count != 0)
                 {
-                    Log("_urls中的数据格式不正确，不包含字符：|");
+                    Log("开始任务");
+                    var urls = _urls[_urls.Count - 1];
+                    _urls.RemoveAt(_urls.Count - 1);
+                    if (urls.IndexOf('|') < 0)
+                    {
+                        Log("_urls中的数据格式不正确，不包含字符：|");
+                    }
+                    else
+                    {
+                        await DownloderHelper.Download(urls.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries), _cookie, Log);
+                        Log("下载完成");
+                    }
+                    _timer = new Timer(CallbackAsync, null, 1000, Timeout.Infinite);
                 }
                 else
                 {
-                    await DownloderHelper.Download(urls.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries), _cookie, Log);
-                    Log("下载完成");
+                    Log("任务url为空");
+                    _timer = new Timer(CallbackAsync, null, 10000, Timeout.Infinite);
                 }
-                _timer = new Timer(CallbackAsync, null, 1000, Timeout.Infinite);
             }
-            else
+            catch (Exception ex)
             {
-                Log("任务url为空");
-                _timer = new Timer(CallbackAsync, null, 10000, Timeout.Infinite);
+                while (ex.InnerException != null)
+                {
+                    Log(ex.Message);
+                    ex = ex.InnerException;
+                }
+
             }
         }
 
@@ -71,7 +83,7 @@ namespace WpfApp
 
             SetWebBrowserSilent(b, true);
 
-            b.Navigate("https://www.wenku8.net/login.php?jumpurl=http%3A%2F%2Fwww.wenku8.net%2Findex.php");
+            b.Navigate("https://www.wenku8.net/book/1546.htm");
         }
 
         /// <summary>
