@@ -65,10 +65,17 @@ namespace Helper
             //下载简体
             if (lsSimple.Count == 1)
             {
-                var item = lsSimple[0];
-                var response = await h.GetAsync(item);
-                await (await response.Content.ReadAsStreamAsync()).SaveAsFile($"data/{dirTitle}/全本/简体/{dirTitle}.txt", (int)response.Content.Headers.ContentLength.Value);
-                log("简体全本下载成功");
+                if (File.Exists($"data/{dirTitle}/全本/简体/{dirTitle}.txt"))
+                {
+                    log("简体全本已存在");
+                }
+                else
+                {
+                    var item = lsSimple[0];
+                    var response = await h.GetAsync(item);
+                    await (await response.Content.ReadAsStreamAsync()).SaveAsFile($"data/{dirTitle}/全本/简体/{dirTitle}.txt", (int)response.Content.Headers.ContentLength.Value);
+                    log("简体全本下载成功");
+                }
             }
             else
             {
@@ -80,10 +87,17 @@ namespace Helper
                 .Select(m => m.SelectNodes("td").Last().SelectNodes("a").Skip(5).First().GetAttributeValue("href", "")).ToList();
             if (lsTraditional.Count != 1)
             {
-                var item = lsTraditional[0];
-                var response = await h.GetAsync(item);
-                await (await response.Content.ReadAsStreamAsync()).SaveAsFile($"data/{dirTitle}/全本/繁体/{dirTitle}.txt", (int)response.Content.Headers.ContentLength.Value);
-                log("繁体全本下载成功");
+                if (File.Exists($"data/{dirTitle}/全本/繁体/{dirTitle}.txt"))
+                {
+                    log("繁体全本已存在");
+                }
+                else
+                {
+                    var item = lsTraditional[0];
+                    var response = await h.GetAsync(item);
+                    await (await response.Content.ReadAsStreamAsync()).SaveAsFile($"data/{dirTitle}/全本/繁体/{dirTitle}.txt", (int)response.Content.Headers.ContentLength.Value);
+                    log("繁体全本下载成功");
+                }
             }
             else
             {
@@ -122,6 +136,11 @@ namespace Helper
             //下载简体
             for (int i = 0; i < lsSimple.Count(); i++)
             {
+                if (File.Exists($"data/{dirTitle}/分卷/简体/第{i + 1}卷.txt"))
+                {
+                    log($"简体第{i + 1}卷已存在");
+                    continue;
+                }
                 var item = lsSimple[i];
                 var response = await h.GetAsync(item);
                 await (await response.Content.ReadAsStreamAsync()).SaveAsFile($"data/{dirTitle}/分卷/简体/第{i + 1}卷.txt", (int)response.Content.Headers.ContentLength.Value);
@@ -133,6 +152,11 @@ namespace Helper
                 .Select(m => m.SelectNodes("td").Last().SelectNodes("a").Skip(2).First().GetAttributeValue("href", "")).ToList();
             for (int i = 0; i < lsTraditional.Count(); i++)
             {
+                if (File.Exists($"data/{dirTitle}/分卷/繁体/第{i + 1}卷.txt"))
+                {
+                    log($"繁体第{i + 1}卷已存在");
+                    continue;
+                }
                 var item = lsTraditional[i];
                 var response = await h.GetAsync(item);
                 await (await response.Content.ReadAsStreamAsync()).SaveAsFile($"data/{dirTitle}/分卷/繁体/第{i + 1}卷.txt", (int)response.Content.Headers.ContentLength.Value);
